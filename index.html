@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>真实生理年龄估算器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+  <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 text-white">
+    <div class="max-w-6xl mx-auto px-6 py-6">
+      <h1 class="text-2xl md:text-3xl font-semibold">真实生理年龄估算器</h1>
+      <p class="text-white/90 mt-1">输入关键生理指标，估算你的生理年龄，并获得个性化建议</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-medium text-slate-800 mb-4">输入生理指标</h2>
+      <form id="ageForm" class="space-y-6">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">基础信息</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs text-slate-600">物理年龄(岁)</label>
+              <input id="age" type="number" min="18" max="100" step="1" required class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="30" />
+            </div>
+            <div class="col-span-1 md:col-span-2">
+              <label class="text-xs text-slate-600">性别</label>
+              <div class="mt-1 flex gap-3">
+                <label class="inline-flex items-center gap-2">
+                  <input type="radio" name="sex" value="male" class="text-violet-600" />
+                  <span>男</span>
+                </label>
+                <label class="inline-flex items-center gap-2">
+                  <input type="radio" name="sex" value="female" class="text-violet-600" />
+                  <span>女</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">身高(cm)</label>
+              <input id="height" type="number" min="120" max="220" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="170" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">体重(kg)</label>
+              <input id="weight" type="number" min="30" max="200" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="65" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">腰围(cm)</label>
+              <input id="waist" type="number" min="40" max="160" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="80" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">BMI</label>
+              <input id="bmi" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">腰高比(WHtR)</label>
+              <input id="whtr" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">生命体征</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs text-slate-600">收缩压 SBP (mmHg)</label>
+              <input id="sbp" type="number" min="80" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="115" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">舒张压 DBP (mmHg)</label>
+              <input id="dbp" type="number" min="50" max="130" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="75" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">静息心率 RHR (bpm)</label>
+              <input id="rhr" type="number" min="35" max="120" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="60" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="text-xs text-slate-600">最大摄氧量 VO2max (ml/kg/min)</label>
+              <input id="vo2max" type="number" min="15" max="80" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="40" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">睡眠时长(小时/晚)</label>
+              <input id="sleep" type="number" min="3" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="7.5" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">实验室指标</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+            <div>
+              <label class="text-xs text-slate-600">血糖单位</label>
+              <select id="gluUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="mgdl">mg/dL</option>
+                <option value="mmol">mmol/L</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">血脂单位</label>
+              <select id="lipUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="mgdl">mg/dL</option>
+                <option value="mmol">mmol/L</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">肌酐单位</label>
+              <select id="crUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="mgdl">mg/dL</option>
+                <option value="umol">µmol/L</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+            <div>
+              <label class="text-xs text-slate-600">HbA1c(%)</label>
+              <input id="hba1c" type="number" min="4" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5.4" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">空腹血糖</label>
+              <input id="fpg" type="number" min="50" max="300" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="90" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">LDL</label>
+              <input id="ldl" type="number" min="20" max="300" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="95" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">HDL</label>
+              <input id="hdl" type="number" min="10" max="120" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="58" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">甘油三酯 TG</label>
+              <input id="tg" type="number" min="20" max="1000" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="120" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">hs-CRP(mg/L)</label>
+              <input id="crp" type="number" min="0" max="20" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="0.8" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">肌酐</label>
+              <input id="cr" type="number" min="0.2" max="1500" step="0.01" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="1.0" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">ALT(U/L)</label>
+              <input id="alt" type="number" min="5" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="24" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">AST(U/L)</label>
+              <input id="ast" type="number" min="5" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="22" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">尿酸(mg/dL)</label>
+              <input id="uric" type="number" min="1" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5.6" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button id="calcBtn" type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算生理年龄</button>
+          <button id="resetBtn" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">清空</button>
+          <button id="demoBtn" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200">填充示例</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-medium text-slate-800 mb-4">结果与建议</h2>
+      <div class="grid gap-4">
+        <div class="p-4 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100">
+          <div class="flex items-end gap-4">
+            <div>
+              <div class="text-sm text-slate-600">估算的生理年龄</div>
+              <div id="bioAgeVal" class="text-4xl font-semibold text-slate-900">—</div>
+            </div>
+            <div class="ml-auto text-right">
+              <div class="text-sm text-slate-600">相对物理年龄</div>
+              <div id="deltaVal" class="text-xl font-medium">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-slate-700">可信度</span>
+            <span id="confidenceVal" class="text-sm text-slate-600">—</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="confidenceBar" class="h-2 bg-violet-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">主要贡献因子</h3>
+          <div id="breakdownList" class="space-y-2 text-sm text-slate-700"></div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700 mb-2">优化建议(基于主要因子)</h3>
+          <ul id="suggestionsList" class="list-disc pl-5 text-sm text-slate-700 space-y-1"></ul>
+        </div>
+
+        <div class="text-xs text-slate-500 leading-relaxed">
+          本工具基于多指标加权与标准化差异的算法原理，结合心代谢、炎症、肾功能等关键系统的综合表现估算生理年龄。结果仅供健康管理与教育用途，不构成医疗诊断或治疗建议。
+        </div>
+      </div>
+    </section>
+    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+      <h2 class="text-lg font-medium text-slate-800 mb-4">趣味健康测试</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="rounded-lg border border-slate-200 p-4">
+          <div class="text-sm font-semibold text-slate-800 mb-3">生活方式年龄</div>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <label class="text-xs text-slate-600">活动天数/周</label>
+              <input id="ls_days" type="number" min="0" max="7" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">单次运动时长(分)</label>
+              <input id="ls_min" type="number" min="0" max="180" step="5" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="40" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">蔬果份/日</label>
+              <input id="ls_fv" type="number" min="0" max="12" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">吸烟</label>
+              <select id="ls_smoke" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="none">不吸烟</option>
+                <option value="former">已戒烟</option>
+                <option value="current">在吸烟</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">酒精(杯/周)</label>
+              <input id="ls_alc" type="number" min="0" max="50" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="2" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">久坐小时/日</label>
+              <input id="ls_sit" type="number" min="0" max="16" step="0.5" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="7" />
+            </div>
+          </div>
+          <div class="flex gap-3 mt-3">
+            <button id="ls_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
+            <button id="ls_demoBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200" type="button">示例</button>
+          </div>
+          <div class="mt-4 grid gap-2 text-sm">
+            <div class="flex items-end gap-3">
+              <div>
+                <div class="text-xs text-slate-600">生活方式年龄</div>
+                <div id="ls_ageVal" class="text-2xl font-semibold text-slate-900">—</div>
+              </div>
+              <div class="ml-auto text-right">
+                <div class="text-xs text-slate-600">相对物理年龄</div>
+                <div id="ls_deltaVal" class="text-base">—</div>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div id="ls_scoreBar" class="h-2 bg-violet-500" style="width: 0%"></div>
+            </div>
+            <ul id="ls_suggestions" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-4">
+          <div class="text-sm font-semibold text-slate-800 mb-3">心肺适能年龄</div>
+          <div class="text-xs text-slate-600">使用上方的性别、年龄及 VO2max 或 RHR 自动估算</div>
+          <div class="flex gap-3 mt-3">
+            <button id="crf_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
+          </div>
+          <div class="mt-4 grid gap-2 text-sm">
+            <div class="flex items-end gap-3">
+              <div>
+                <div class="text-xs text-slate-600">心肺适能年龄</div>
+                <div id="crf_ageVal" class="text-2xl font-semibold text-slate-900">—</div>
+              </div>
+              <div class="ml-auto text-right">
+                <div class="text-xs text-slate-600">相对物理年龄</div>
+                <div id="crf_deltaVal" class="text-base">—</div>
+              </div>
+            </div>
+            <div id="crf_note" class="text-xs text-slate-500">—</div>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 p-4">
+          <div class="text-sm font-semibold text-slate-800 mb-3">睡眠评分</div>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <label class="text-xs text-slate-600">规律天数/周</label>
+              <input id="sl_consistency" type="number" min="0" max="7" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">14点后咖啡因</label>
+              <select id="sl_caf" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="no">否</option>
+                <option value="yes">是</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">睡前1小时看屏幕</label>
+              <select id="sl_screen" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="no">否</option>
+                <option value="yes">是</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">打鼾/呼吸暂停风险</label>
+              <select id="sl_apnea" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+                <option value="no">否</option>
+                <option value="yes">是</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">主观休息感(1-5)</label>
+              <input id="sl_quality" type="number" min="1" max="5" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
+            </div>
+          </div>
+          <div class="flex gap-3 mt-3">
+            <button id="sl_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
+            <button id="sl_demoBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200" type="button">示例</button>
+          </div>
+          <div class="mt-4 grid gap-2 text-sm">
+            <div class="flex items-end gap-3">
+              <div>
+                <div class="text-xs text-slate-600">睡眠评分</div>
+                <div id="sl_scoreVal" class="text-2xl font-semibold text-slate-900">—</div>
+              </div>
+              <div class="ml-auto text-right">
+                <div class="text-xs text-slate-600">等级</div>
+                <div id="sl_gradeVal" class="text-base">—</div>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div id="sl_scoreBar" class="h-2 bg-violet-500" style="width: 0%"></div>
+            </div>
+            <ul id="sl_suggestions" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+      <h2 class="text-lg font-medium text-slate-800 mb-4">数据与分享</h2>
+      <div class="flex flex-wrap gap-3">
+        <button id="saveBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">保存到本地</button>
+        <button id="loadBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">从本地读取</button>
+        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">导出JSON</button>
+        <button id="importBtn" class="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200" type="button">导入JSON</button>
+        <button id="copyBtn" class="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">复制结果</button>
+        <button id="shareBtn" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white hover:bg-fuchsia-700">复制分享链接</button>
+        <input id="importFile" type="file" accept="application/json" class="hidden" />
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
