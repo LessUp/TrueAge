@@ -55,7 +55,9 @@
               <input id="bmi" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
             </div>
             <div>
-              <label class="text-xs text-slate-600">腰高比(WHtR)</label>
+              <label class="text-xs text-slate-600">腰高比(WHtR)
+                <span class="block text-[11px] text-slate-400 mt-0.5">腰围÷身高，目标 <0.5，有助于降低心血管与代谢风险</span>
+              </label>
               <input id="whtr" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
             </div>
           </div>
@@ -77,11 +79,15 @@
               <input id="rhr" type="number" min="35" max="120" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="60" />
             </div>
             <div class="md:col-span-2">
-              <label class="text-xs text-slate-600">最大摄氧量 VO2max (ml/kg/min)</label>
+              <label class="text-xs text-slate-600">最大摄氧量 VO2max (ml/kg/min)
+                <span class="block text-[11px] text-slate-400 mt-0.5">代表心肺适能水平，越高通常越有利于心血管与寿命</span>
+              </label>
               <input id="vo2max" type="number" min="15" max="80" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="40" />
             </div>
             <div>
-              <label class="text-xs text-slate-600">睡眠时长(小时/晚)</label>
+              <label class="text-xs text-slate-600">睡眠时长(小时/晚)
+                <span class="block text-[11px] text-slate-400 mt-0.5">多数研究显示约 7–9 小时与较低健康风险相关</span>
+              </label>
               <input id="sleep" type="number" min="3" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="7.5" />
             </div>
           </div>
@@ -287,7 +293,9 @@
           <div class="text-sm font-semibold text-slate-800 mb-3">睡眠评分</div>
           <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <label class="text-xs text-slate-600">规律天数/周</label>
+              <label class="text-xs text-slate-600">规律天数/周
+                <span class="block text-[11px] text-slate-400 mt-0.5">指按相近时间入睡和起床的天数，越规律越好</span>
+              </label>
               <input id="sl_consistency" type="number" min="0" max="7" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5" />
             </div>
             <div>
