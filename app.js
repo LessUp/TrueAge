@@ -444,7 +444,23 @@ function readLifestyleInputs() {
 
 function computeLifestyleAge(input, ls) {
   const actMin = Number.isFinite(ls.days) && Number.isFinite(ls.minutes) ? clamp(ls.days * ls.minutes, 0, 600) : NaN;
-  const actScore = Number.isFinite(actMin) ? clamp((actMin / 300) * 100, 0, 100) : NaN;
+  let actScore = NaN;
+  if (Number.isFinite(actMin)) {
+    let s = 0;
+    if (actMin <= 0) {
+      s = 0;
+    } else if (actMin < 150) {
+      // 0–150 分钟：线性从 0 提升到约 80 分（达到指南下限）
+      s = (actMin / 150) * 80;
+    } else if (actMin <= 300) {
+      // 150–300 分钟：从 80 分提升到 100 分
+      s = 80 + ((actMin - 150) / 150) * 20;
+    } else {
+      // >300 分钟：不再额外加成，封顶 100 分
+      s = 100;
+    }
+    actScore = clamp(s, 0, 100);
+  }
   const fvScore = Number.isFinite(ls.fv) ? clamp((ls.fv / 5) * 100, 0, 100) : NaN;
   let smokeScore = NaN;
   if (ls.smoke === 'none') smokeScore = 100; else if (ls.smoke === 'former') smokeScore = 70; else if (ls.smoke === 'current') smokeScore = 20;
@@ -565,8 +581,8 @@ function computeSleepScore(input, sl) {
   const apScore = sl.apnea === 'no' ? 100 : sl.apnea === 'yes' ? 40 : NaN;
   const qScore = Number.isFinite(sl.quality) ? clamp(20 * sl.quality, 20, 100) : NaN;
   const comps = [
-    { s: durScore, w: 0.35 },
-    { s: consScore, w: 0.25 },
+    { s: durScore, w: 0.30 },
+    { s: consScore, w: 0.30 },
     { s: cafScore, w: 0.10 },
     { s: scrScore, w: 0.10 },
     { s: apScore, w: 0.10 },
