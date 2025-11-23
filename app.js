@@ -1,5 +1,55 @@
 const $ = (id) => document.getElementById(id);
 
+// --- Utils ---
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
+function showToast(message, type = 'info') {
+  const container = $('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  
+  const colors = {
+    success: 'bg-emerald-600 text-white',
+    error: 'bg-rose-600 text-white',
+    info: 'bg-slate-800 text-white'
+  };
+  
+  const icons = {
+    success: 'check-circle',
+    error: 'alert-circle',
+    info: 'info'
+  };
+
+  toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg shadow-slate-200/50 flex items-center gap-3 transform transition-all duration-500 translate-x-10 opacity-0 min-w-[200px]`;
+  toast.innerHTML = `
+    <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5"></i>
+    <span class="text-sm font-medium">${message}</span>
+  `;
+  
+  container.appendChild(toast);
+  lucide.createIcons({ root: toast });
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.classList.remove('translate-x-10', 'opacity-0');
+  });
+
+  // Remove after 3s
+  setTimeout(() => {
+    toast.classList.add('translate-x-10', 'opacity-0');
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
+}
+
+// --- Math Helpers ---
 function toNumber(v) {
   const x = parseFloat(v);
   return Number.isFinite(x) ? x : NaN;
@@ -9,6 +59,7 @@ function clamp(x, a, b) {
   return Math.max(a, Math.min(b, x));
 }
 
+// --- Core Calc Functions ---
 function computeBMI(heightCm, weightKg) {
   if (!Number.isFinite(heightCm) || !Number.isFinite(weightKg)) return NaN;
   const h = heightCm / 100;
@@ -46,11 +97,13 @@ function convertTgToMgDl(value, unit) {
   if (!Number.isFinite(value)) return NaN;
   return unit === 'mmol' ? value * 88.57 : value;
 }
+
 function convertCreatinineToMgDl(value, unit) {
   if (!Number.isFinite(value)) return NaN;
   return unit === 'umol' ? value / 88.4 : value;
 }
 
+// --- Data Reading ---
 function readForm() {
   const sex = [...document.querySelectorAll('input[name="sex"]')].find(r => r.checked)?.value || '';
   const age = toNumber($("age").value);
@@ -96,8 +149,19 @@ function updateDerivedDisplays() {
   const waist = toNumber($("waist").value);
   const bmi = computeBMI(height, weight);
   const whtr = computeWHtR(height, waist);
-  $("bmi").value = Number.isFinite(bmi) ? bmi.toFixed(1) : '—';
-  $("whtr").value = Number.isFinite(whtr) ? whtr.toFixed(2) : '—';
+  
+  const bmiEl = $("bmi");
+  const whtrEl = $("whtr");
+  
+  bmiEl.value = Number.isFinite(bmi) ? bmi.toFixed(1) : '—';
+  whtrEl.value = Number.isFinite(whtr) ? whtr.toFixed(2) : '—';
+
+  // Add visual indicators
+  if (Number.isFinite(whtr)) {
+      whtrEl.style.color = whtr > 0.5 ? '#e11d48' : '#059669'; // rose-600 : emerald-600
+  } else {
+      whtrEl.style.color = '';
+  }
 }
 
 function buildMetricDefs(input) {
@@ -141,61 +205,22 @@ function buildMetricDefs(input) {
     sleep: 1.0,
   };
   const weights = {
-    bmi: 0.10,
-    whtr: 0.10,
-    sbp: 0.09,
-    dbp: 0.09,
-    rhr: 0.06,
-    vo2max: 0.09,
-    hdl: 0.07,
-    ldl: 0.08,
-    tg: 0.05,
-    hba1c: 0.10,
-    fpg: 0.06,
-    crp: 0.08,
-    egfr: 0.07,
-    alt: 0.04,
-    ast: 0.03,
-    uric: 0.04,
-    sleep: 0.02,
+    bmi: 0.10, whtr: 0.10, sbp: 0.09, dbp: 0.09, rhr: 0.06,
+    vo2max: 0.09, hdl: 0.07, ldl: 0.08, tg: 0.05,
+    hba1c: 0.10, fpg: 0.06, crp: 0.08, egfr: 0.07,
+    alt: 0.04, ast: 0.03, uric: 0.04, sleep: 0.02,
   };
   const dirs = {
-    bmi: 'higher_worse',
-    whtr: 'higher_worse',
-    sbp: 'higher_worse',
-    dbp: 'higher_worse',
-    rhr: 'higher_worse',
-    vo2max: 'higher_better',
-    hdl: 'higher_better',
-    ldl: 'higher_worse',
-    tg: 'higher_worse',
-    hba1c: 'higher_worse',
-    fpg: 'higher_worse',
-    crp: 'higher_worse',
-    egfr: 'higher_better',
-    alt: 'higher_worse',
-    ast: 'higher_worse',
-    uric: 'higher_worse',
-    sleep: 'higher_better',
+    bmi: 'higher_worse', whtr: 'higher_worse', sbp: 'higher_worse', dbp: 'higher_worse', rhr: 'higher_worse',
+    vo2max: 'higher_better', hdl: 'higher_better', ldl: 'higher_worse', tg: 'higher_worse',
+    hba1c: 'higher_worse', fpg: 'higher_worse', crp: 'higher_worse', egfr: 'higher_better',
+    alt: 'higher_worse', ast: 'higher_worse', uric: 'higher_worse', sleep: 'higher_better',
   };
   const labels = {
-    bmi: '体重指数(BMI)',
-    whtr: '腰高比(WHtR)',
-    sbp: '收缩压(SBP)',
-    dbp: '舒张压(DBP)',
-    rhr: '静息心率',
-    vo2max: '最大摄氧量(VO2max)',
-    hdl: '高密度脂蛋白(HDL)',
-    ldl: '低密度脂蛋白(LDL)',
-    tg: '甘油三酯(TG)',
-    hba1c: '糖化血红蛋白(HbA1c)',
-    fpg: '空腹血糖',
-    crp: '炎症指标(hs-CRP)',
-    egfr: '肾小球滤过率(eGFR)',
-    alt: 'ALT',
-    ast: 'AST',
-    uric: '尿酸',
-    sleep: '睡眠时长',
+    bmi: 'BMI', whtr: '腰高比', sbp: '收缩压', dbp: '舒张压', rhr: '静息心率',
+    vo2max: 'VO2max', hdl: 'HDL', ldl: 'LDL', tg: '甘油三酯',
+    hba1c: 'HbA1c', fpg: '空腹血糖', crp: 'hs-CRP', egfr: 'eGFR',
+    alt: 'ALT', ast: 'AST', uric: '尿酸', sleep: '睡眠',
   };
   return { targets, sds, weights, dirs, labels };
 }
@@ -203,23 +228,10 @@ function buildMetricDefs(input) {
 function computeScore(input) {
   const { targets, sds, weights, dirs, labels } = buildMetricDefs(input);
   const values = {
-    bmi: input.bmi,
-    whtr: input.whtr,
-    sbp: input.sbp,
-    dbp: input.dbp,
-    rhr: input.rhr,
-    vo2max: input.vo2max,
-    hdl: input.hdl,
-    ldl: input.ldl,
-    tg: input.tg,
-    hba1c: input.hba1c,
-    fpg: input.fpg,
-    crp: input.crp,
-    egfr: input.egfr,
-    alt: input.alt,
-    ast: input.ast,
-    uric: input.uric,
-    sleep: input.sleep,
+    bmi: input.bmi, whtr: input.whtr, sbp: input.sbp, dbp: input.dbp, rhr: input.rhr,
+    vo2max: input.vo2max, hdl: input.hdl, ldl: input.ldl, tg: input.tg,
+    hba1c: input.hba1c, fpg: input.fpg, crp: input.crp, egfr: input.egfr,
+    alt: input.alt, ast: input.ast, uric: input.uric, sleep: input.sleep,
   };
 
   const entries = Object.keys(values).map(k => ({ id: k, value: values[k] }))
@@ -228,12 +240,7 @@ function computeScore(input) {
   const sumAllWeights = Object.values(weights).reduce((a, b) => a + b, 0);
   const totalWeight = entries.reduce((acc, e) => acc + (weights[e.id] || 0), 0);
   if (totalWeight <= 0 || !Number.isFinite(input.age)) {
-    return {
-      bioAge: NaN,
-      delta: NaN,
-      confidence: 0,
-      breakdown: [],
-    };
+    return { bioAge: NaN, delta: NaN, confidence: 0, breakdown: [] };
   }
 
   const scalePerZ = 5;
@@ -289,149 +296,98 @@ function renderResults(res, input) {
 
   if (!Number.isFinite(res.bioAge)) {
     bioAgeEl.textContent = '—';
-    deltaEl.textContent = '—';
+    deltaEl.textContent = '...';
+    deltaEl.className = 'text-lg font-medium text-white/90 px-2 py-0.5 rounded-lg bg-white/20 backdrop-blur-sm';
     confBar.style.width = '0%';
-    confVal.textContent = '—';
-    breakdownList.innerHTML = '';
+    confVal.textContent = '0%';
+    breakdownList.innerHTML = '<div class="text-center text-sm text-slate-400 py-4">输入数据以查看分析</div>';
     suggestionsList.innerHTML = '';
     return;
   }
 
-  bioAgeEl.textContent = `${res.bioAge.toFixed(1)} 岁`;
+  // Animate number
+  bioAgeEl.textContent = `${res.bioAge.toFixed(1)}`;
 
-  deltaEl.classList.remove('text-rose-600', 'text-green-600');
   const d = res.delta;
+  deltaEl.className = `text-sm font-bold px-2 py-1 rounded-md backdrop-blur-sm ${d > 0.05 ? 'bg-rose-500/20 text-rose-100' : d < -0.05 ? 'bg-emerald-500/20 text-emerald-100' : 'bg-white/20 text-white'}`;
+  
   if (d > 0.05) {
-    deltaEl.textContent = `比物理年龄年长 ${d.toFixed(1)} 岁`;
-    deltaEl.classList.add('text-rose-600');
+    deltaEl.textContent = `+${d.toFixed(1)} 岁`;
   } else if (d < -0.05) {
-    deltaEl.textContent = `比物理年龄年轻 ${Math.abs(d).toFixed(1)} 岁`;
-    deltaEl.classList.add('text-green-600');
+    deltaEl.textContent = `-${Math.abs(d).toFixed(1)} 岁`;
   } else {
-    deltaEl.textContent = '与物理年龄相当';
+    deltaEl.textContent = '=';
   }
 
   const confPct = Math.round(res.confidence * 100);
-  const confLabel = res.confidence >= 0.75 ? '高' : res.confidence >= 0.55 ? '中' : '低';
   confBar.style.width = `${confPct}%`;
-  confVal.textContent = `${confLabel}（${confPct}%）`;
+  confVal.textContent = `${confPct}%`;
+  // Color code confidence bar
+  confBar.className = `h-full rounded-full transition-all duration-700 ease-out ${confPct > 70 ? 'bg-emerald-400' : confPct > 40 ? 'bg-amber-400' : 'bg-rose-400'}`;
 
-  const top = res.breakdown.slice(0, 6);
+  const top = res.breakdown.slice(0, 5);
   breakdownList.innerHTML = top.map(c => {
-    const sign = c.years >= 0 ? '+' : '−';
-    const color = c.years >= 0 ? 'text-rose-600' : 'text-green-600';
-    const badge = c.years >= 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    const isAging = c.years >= 0;
+    const colorClass = isAging ? 'text-rose-600 bg-rose-50 border-rose-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    const icon = isAging ? 'chevrons-up' : 'chevrons-down';
+    
     return `
-      <div class="flex items-center justify-between p-2 rounded-lg border ${badge}">
-        <div class="text-slate-700">
-          <div class="font-medium">${c.label}</div>
-          <div class="text-xs text-slate-500">当前 ${formatNum(c.value, 2)} | 目标 ${formatNum(c.target, 2)}</div>
+      <div class="flex items-center justify-between p-2.5 rounded-lg border ${colorClass} transition-transform hover:scale-[1.01]">
+        <div class="flex flex-col">
+          <span class="font-bold text-sm text-slate-700">${c.label}</span>
+          <span class="text-[10px] text-slate-500 opacity-80">当前 ${formatNum(c.value, 2)} / 目标 ${formatNum(c.target, 2)}</span>
         </div>
-        <div class="text-right ${color} font-medium">
-          ${sign}${Math.abs(c.years).toFixed(2)} 岁
+        <div class="flex items-center gap-1 font-bold ${isAging ? 'text-rose-600' : 'text-emerald-600'}">
+          <span class="text-sm">${isAging ? '+' : '-'}${Math.abs(c.years).toFixed(1)}</span>
+          <i data-lucide="${icon}" class="w-3 h-3"></i>
         </div>
       </div>
     `;
   }).join('');
-
   
+  // Re-render icons for the new list
+  lucide.createIcons({ root: breakdownList });
+
   const worst = res.breakdown.filter(c => c.years > 0).slice(0, 3);
   const tips = [];
   worst.forEach(c => tips.push(...suggestionFor(c.id, input)));
-  suggestionsList.innerHTML = tips.slice(0, 6).map(t => `<li>${t}</li>`).join('');
+  
+  if (tips.length === 0 && res.breakdown.length > 0) {
+      tips.push("您的指标表现优秀，请继续保持！");
+  }
+  
+  suggestionsList.innerHTML = tips.slice(0, 5).map(t => 
+    `<li class="flex gap-2 items-start">
+      <span class="mt-1.5 w-1 h-1 rounded-full bg-slate-400 flex-shrink-0"></span>
+      <span class="flex-1">${t}</span>
+    </li>`
+  ).join('');
 }
 
 function suggestionFor(id, input) {
   const S = {
-    bmi: [
-      '控制总能量与精制碳水，优先高蛋白与高纤维',
-      '每周≥2次抗阻训练并配合日均8000步',
-      '阶段目标：BMI≈22'
-    ],
-    whtr: [
-      '优先减少腹部脂肪：控糖/酒，餐后步行10–15分钟',
-      '加入核心力量训练（平板、卷腹、深蹲）每周2–3次',
-      '阶段目标：WHtR<0.5'
-    ],
-    sbp: [
-      '减少钠盐摄入与加工食品，增加钾（蔬果）',
-      '每周150–300分钟中等强度有氧+力量',
-      '若持续≥130/80 mmHg，请就医评估'
-    ],
-    dbp: [
-      '压力管理与深呼吸训练，规律作息',
-      '体重管理与有氧耐力训练',
-      '记录家庭血压，异常请就医'
-    ],
-    rhr: [
-      '逐步提升有氧耐力：慢跑/骑行/游泳',
-      '每周2次间歇训练（如4×4分钟高强度）',
-      '保障睡眠与恢复，避免过度训练'
-    ],
-    vo2max: [
-      '每周2次HIIT+2次中等强度有氧组合',
-      '间歇方案：4×4分钟高强度，间隔3分钟轻松',
-      '逐步延长到每周180–300分钟有氧总量'
-    ],
-    hdl: [
-      '增加运动与健康脂肪：橄榄油、坚果、深海鱼',
-      '戒烟限酒，控制精制糖',
-      '维持健康体脂率'
-    ],
-    ldl: [
-      '减少饱和脂肪与反式脂肪，增加可溶性纤维（燕麦、豆类）',
-      '考虑植物甾醇/烟酸/水溶性纤维补充（咨询医生）',
-      '必要时就医评估他汀或非他汀方案'
-    ],
-    tg: [
-      '限制精制糖与酒精，优化餐次分配',
-      '补充Omega-3（深海鱼/鱼油）',
-      '规律运动与体重管理'
-    ],
-    hba1c: [
-      '控制碳水比例与时机，优先低GI食物',
-      '餐后步行或轻度运动10–15分钟',
-      '提升肌肉量与胰岛素敏感性（抗阻+有氧）'
-    ],
-    fpg: [
-      '晚餐提前，睡前避免高糖零食',
-      '早晨快走/拉伸改善胰岛素敏感性',
-      '保持7–9小时高质量睡眠'
-    ],
-    crp: [
-      '抗炎饮食：蔬果、橄榄油、坚果、深海鱼',
-      '规律作息与压力管理，避免长期熬夜',
-      '排除感染或慢性炎症，必要时就医'
-    ],
-    egfr: [
-      '充足饮水，避免NSAIDs等肾毒性药物过量',
-      '控制血压血糖，维持健康体重',
-      'eGFR异常持续请肾内科评估'
-    ],
-    alt: [
-      '控制酒精与含糖饮料，减少精制碳水',
-      '减重与有氧运动，关注脂肪肝筛查',
-      '异常持续请肝病门诊评估'
-    ],
-    ast: [
-      '与ALT类似：控酒、控糖、减重与规律运动',
-      '评估药物/草本对肝的影响',
-      '必要时完善肝功能检查'
-    ],
-    uric: [
-      '减少高嘌呤食物与酒精（尤其啤酒）',
-      '充足饮水与体重管理',
-      '反复痛风发作请风湿科评估降尿酸治疗'
-    ],
-    sleep: [
-      '固定睡眠与起床时间，目标7–9小时',
-      '睡前1小时远离蓝光与重口味饮食',
-      '卧室黑暗、安静、偏凉，持续2周建立节律'
-    ],
+    bmi: ['控制总能量与碳水，优先高蛋白', '每周≥2次抗阻训练'],
+    whtr: ['减少腹部脂肪：控糖、限酒', '核心训练（平板/卷腹）'],
+    sbp: ['减少钠盐，增加钾(蔬果)', '每周150分钟中等有氧'],
+    dbp: ['压力管理，深呼吸', '有氧耐力训练'],
+    rhr: ['提升有氧耐力(跑/游)', '保障睡眠与恢复'],
+    vo2max: ['HIIT间歇训练', '增加有氧运动总量'],
+    hdl: ['增加优质脂肪(鱼/坚果)', '戒烟，有氧运动'],
+    ldl: ['减少饱和脂肪/反式脂肪', '增加膳食纤维'],
+    tg: ['限制精制糖与酒精', '补充Omega-3'],
+    hba1c: ['低GI饮食', '餐后轻度活动'],
+    fpg: ['晚餐少碳水，睡前禁食', '改善胰岛素敏感性'],
+    crp: ['抗炎饮食(蔬果/鱼)', '避免熬夜'],
+    egfr: ['充足饮水', '慎用伤肾药物'],
+    alt: ['限酒，减重', '脂肪肝筛查'],
+    ast: ['限酒，规律作息', '肝功能监测'],
+    uric: ['低嘌呤饮食，限酒', '多饮水'],
+    sleep: ['固定作息，7-9小时', '睡前远离蓝光'],
   };
   return S[id] ? S[id] : [];
 }
 
+// --- Secondary Modules ---
 function readLifestyleInputs() {
   const days = toNumber($("ls_days")?.value);
   const minutes = toNumber($("ls_min")?.value);
@@ -447,18 +403,10 @@ function computeLifestyleAge(input, ls) {
   let actScore = NaN;
   if (Number.isFinite(actMin)) {
     let s = 0;
-    if (actMin <= 0) {
-      s = 0;
-    } else if (actMin < 150) {
-      // 0–150 分钟：线性从 0 提升到约 80 分（达到指南下限）
-      s = (actMin / 150) * 80;
-    } else if (actMin <= 300) {
-      // 150–300 分钟：从 80 分提升到 100 分
-      s = 80 + ((actMin - 150) / 150) * 20;
-    } else {
-      // >300 分钟：不再额外加成，封顶 100 分
-      s = 100;
-    }
+    if (actMin <= 0) s = 0;
+    else if (actMin < 150) s = (actMin / 150) * 80;
+    else if (actMin <= 300) s = 80 + ((actMin - 150) / 150) * 20;
+    else s = 100;
     actScore = clamp(s, 0, 100);
   }
   const fvScore = Number.isFinite(ls.fv) ? clamp((ls.fv / 5) * 100, 0, 100) : NaN;
@@ -473,11 +421,8 @@ function computeLifestyleAge(input, ls) {
     if (ls.sit <= 2) sitScore = 100; else if (ls.sit >= 12) sitScore = 20; else sitScore = clamp(100 - ((ls.sit - 2) / 8) * 60, 20, 100);
   }
   const comps = [
-    { s: actScore, w: 0.35 },
-    { s: fvScore, w: 0.20 },
-    { s: smokeScore, w: 0.20 },
-    { s: alcScore, w: 0.10 },
-    { s: sitScore, w: 0.15 },
+    { s: actScore, w: 0.35 }, { s: fvScore, w: 0.20 },
+    { s: smokeScore, w: 0.20 }, { s: alcScore, w: 0.10 }, { s: sitScore, w: 0.15 },
   ];
   const usable = comps.filter(c => Number.isFinite(c.s));
   if (usable.length === 0 || !Number.isFinite(input.age)) return { lsAge: NaN, score: NaN, delta: NaN, tips: [] };
@@ -485,12 +430,12 @@ function computeLifestyleAge(input, ls) {
   const score = clamp(usable.reduce((a, b) => a + b.s * b.w, 0) / wsum, 0, 100);
   const delta = (50 - score) * 0.2;
   const lsAge = clamp(input.age + delta, 10, 110);
+  
   const tips = [];
-  if (ls.smoke === 'current') tips.push('戒烟并寻求专业支持');
-  if (Number.isFinite(actMin) && actMin < 150) tips.push('每周≥150–300分钟中等强度活动');
-  if (Number.isFinite(ls.fv) && ls.fv < 5) tips.push('每日≥5份蔬果');
-  if (Number.isFinite(ls.alc) && ls.alc > 14) tips.push('减少酒精摄入，目标≤7杯/周');
-  if (Number.isFinite(ls.sit) && ls.sit > 8) tips.push('久坐久站每小时活动2–3分钟');
+  if (ls.smoke === 'current') tips.push('戒烟');
+  if (Number.isFinite(actMin) && actMin < 150) tips.push('增加运动');
+  if (Number.isFinite(ls.fv) && ls.fv < 5) tips.push('多吃蔬果');
+  
   return { lsAge, score, delta, tips };
 }
 
@@ -501,19 +446,24 @@ function renderLifestyle(res, age) {
   const list = $("ls_suggestions");
   if (!Number.isFinite(res.lsAge)) {
     ageEl.textContent = '—';
-    deltaEl.textContent = '—';
+    deltaEl.textContent = '';
     bar.style.width = '0%';
     list.innerHTML = '';
     return;
   }
-  ageEl.textContent = `${res.lsAge.toFixed(1)} 岁`;
-  deltaEl.classList.remove('text-rose-600', 'text-green-600');
-  if (res.delta > 0.05) { deltaEl.textContent = `比物理年龄年长 ${res.delta.toFixed(1)} 岁`; deltaEl.classList.add('text-rose-600'); }
-  else if (res.delta < -0.05) { deltaEl.textContent = `比物理年龄年轻 ${Math.abs(res.delta).toFixed(1)} 岁`; deltaEl.classList.add('text-green-600'); }
-  else { deltaEl.textContent = '与物理年龄相当'; }
+  ageEl.textContent = `${res.lsAge.toFixed(1)}岁`;
+  
+  if (res.delta > 0.05) {
+      deltaEl.innerHTML = `<span class="text-rose-500 font-medium">+${res.delta.toFixed(1)} 岁</span>`;
+  } else if (res.delta < -0.05) {
+      deltaEl.innerHTML = `<span class="text-emerald-500 font-medium">-${Math.abs(res.delta).toFixed(1)} 岁</span>`;
+  } else {
+      deltaEl.textContent = '与实际年龄相当';
+  }
+  
   const pct = Math.round(clamp(res.score, 0, 100));
   bar.style.width = `${pct}%`;
-  list.innerHTML = res.tips.slice(0, 5).map(t => `<li>${t}</li>`).join('');
+  list.innerHTML = res.tips.slice(0, 3).map(t => `<li>${t}</li>`).join('');
 }
 
 function computeCRFAge(input) {
@@ -528,13 +478,13 @@ function computeCRFAge(input) {
   } else if (Number.isFinite(vo2)) {
     used = 'vo2';
   }
-  if (!Number.isFinite(vo2) || !sex || !Number.isFinite(age)) return { crfAge: NaN, delta: NaN, note: '需要VO2max或RHR' };
+  if (!Number.isFinite(vo2) || !sex || !Number.isFinite(age)) return { crfAge: NaN, delta: NaN, note: '需 VO2max 或 RHR' };
   const v0 = sex === 'male' ? 50 : 42;
   const k = sex === 'male' ? 0.34 : 0.30;
   const ageEst = 20 + (v0 - vo2) / k;
   const crfAge = clamp(ageEst, 15, 90);
   const delta = crfAge - age;
-  const note = used === 'vo2' ? '由VO2max计算' : used === 'rhr' ? '由RHR估算' : '—';
+  const note = used === 'vo2' ? '基于 VO2max' : '基于 RHR';
   return { crfAge, delta, note };
 }
 
@@ -544,16 +494,20 @@ function renderCRF(res, age) {
   const noteEl = $("crf_note");
   if (!Number.isFinite(res.crfAge)) {
     ageEl.textContent = '—';
-    deltaEl.textContent = '—';
-    noteEl.textContent = res.note || '—';
+    deltaEl.textContent = '';
+    noteEl.textContent = res.note || '';
     return;
   }
-  ageEl.textContent = `${res.crfAge.toFixed(1)} 岁`;
-  deltaEl.classList.remove('text-rose-600', 'text-green-600');
-  if (res.delta > 0.05) { deltaEl.textContent = `年长 ${res.delta.toFixed(1)} 岁`; deltaEl.classList.add('text-rose-600'); }
-  else if (res.delta < -0.05) { deltaEl.textContent = `年轻 ${Math.abs(res.delta).toFixed(1)} 岁`; deltaEl.classList.add('text-green-600'); }
-  else { deltaEl.textContent = '与物理年龄相当'; }
-  noteEl.textContent = res.note || '—';
+  ageEl.textContent = `${res.crfAge.toFixed(1)}岁`;
+  
+  if (res.delta > 0.05) {
+      deltaEl.innerHTML = `<span class="text-rose-500 font-medium">+${res.delta.toFixed(1)} 岁</span>`;
+  } else if (res.delta < -0.05) {
+      deltaEl.innerHTML = `<span class="text-emerald-500 font-medium">-${Math.abs(res.delta).toFixed(1)} 岁</span>`;
+  } else {
+      deltaEl.textContent = '—';
+  }
+  noteEl.textContent = res.note;
 }
 
 function readSleepInputs() {
@@ -580,27 +534,25 @@ function computeSleepScore(input, sl) {
   const scrScore = sl.screen === 'no' ? 100 : sl.screen === 'yes' ? 65 : NaN;
   const apScore = sl.apnea === 'no' ? 100 : sl.apnea === 'yes' ? 40 : NaN;
   const qScore = Number.isFinite(sl.quality) ? clamp(20 * sl.quality, 20, 100) : NaN;
+  
   const comps = [
-    { s: durScore, w: 0.30 },
-    { s: consScore, w: 0.30 },
-    { s: cafScore, w: 0.10 },
-    { s: scrScore, w: 0.10 },
-    { s: apScore, w: 0.10 },
-    { s: qScore, w: 0.10 },
+    { s: durScore, w: 0.30 }, { s: consScore, w: 0.30 },
+    { s: cafScore, w: 0.10 }, { s: scrScore, w: 0.10 },
+    { s: apScore, w: 0.10 }, { s: qScore, w: 0.10 },
   ];
   const usable = comps.filter(c => Number.isFinite(c.s));
   if (usable.length === 0) return { score: NaN, grade: '—', tips: [] };
+  
   const wsum = usable.reduce((a, b) => a + b.w, 0);
   const score = clamp(usable.reduce((a, b) => a + b.s * b.w, 0) / wsum, 0, 100);
   let grade = 'C';
   if (score >= 85) grade = 'A'; else if (score >= 70) grade = 'B'; else if (score >= 55) grade = 'C'; else grade = 'D';
+  
   const tips = [];
-  if (sl.caf === 'yes') tips.push('14点后避免咖啡因');
-  if (sl.screen === 'yes') tips.push('睡前1小时远离屏幕');
-  if (sl.apnea === 'yes') tips.push('评估打鼾与睡眠呼吸暂停风险');
-  if (Number.isFinite(duration) && (duration < 7 || duration > 9)) tips.push('将睡眠时长优化到7–9小时');
-  if (Number.isFinite(sl.consistency) && sl.consistency < 5) tips.push('固定作息，规律天数≥5天/周');
-  if (Number.isFinite(sl.quality) && sl.quality <= 3) tips.push('睡前放松训练与优化睡眠环境');
+  if (sl.caf === 'yes') tips.push('午后限咖');
+  if (sl.screen === 'yes') tips.push('睡前禁屏');
+  if (Number.isFinite(duration) && (duration < 7 || duration > 9)) tips.push('时长7-9h');
+  
   return { score, grade, tips };
 }
 
@@ -609,57 +561,41 @@ function renderSleep(res) {
   const gradeEl = $("sl_gradeVal");
   const bar = $("sl_scoreBar");
   const list = $("sl_suggestions");
+  
   if (!Number.isFinite(res.score)) {
     scoreEl.textContent = '—';
-    gradeEl.textContent = '—';
+    gradeEl.textContent = '';
     bar.style.width = '0%';
     list.innerHTML = '';
     return;
   }
   const pct = Math.round(clamp(res.score, 0, 100));
   scoreEl.textContent = `${pct}`;
-  gradeEl.textContent = `${res.grade}`;
+  gradeEl.textContent = res.grade;
+  gradeEl.className = `text-xs font-bold px-1.5 rounded text-white ${res.grade === 'A' ? 'bg-emerald-500' : res.grade === 'B' ? 'bg-blue-500' : 'bg-amber-500'}`;
+  
   bar.style.width = `${pct}%`;
-  list.innerHTML = res.tips.slice(0, 5).map(t => `<li>${t}</li>`).join('');
+  list.innerHTML = res.tips.slice(0, 3).map(t => `<li>${t}</li>`).join('');
 }
 
+// --- State & Serialization ---
 function serializeState() {
   const sex = [...document.querySelectorAll('input[name="sex"]')].find(r => r.checked)?.value || '';
   const state = {
     age: $("age")?.value || '',
     sex,
-    height: $("height")?.value || '',
-    weight: $("weight")?.value || '',
-    waist: $("waist")?.value || '',
-    sbp: $("sbp")?.value || '',
-    dbp: $("dbp")?.value || '',
-    rhr: $("rhr")?.value || '',
-    vo2max: $("vo2max")?.value || '',
-    sleep: $("sleep")?.value || '',
-    gluUnit: $("gluUnit")?.value || 'mgdl',
-    lipUnit: $("lipUnit")?.value || 'mgdl',
-    crUnit: $("crUnit")?.value || 'mgdl',
-    hba1c: $("hba1c")?.value || '',
-    fpg: $("fpg")?.value || '',
-    ldl: $("ldl")?.value || '',
-    hdl: $("hdl")?.value || '',
-    tg: $("tg")?.value || '',
-    crp: $("crp")?.value || '',
-    cr: $("cr")?.value || '',
-    alt: $("alt")?.value || '',
-    ast: $("ast")?.value || '',
-    uric: $("uric")?.value || '',
-    ls_days: $("ls_days")?.value || '',
-    ls_min: $("ls_min")?.value || '',
-    ls_fv: $("ls_fv")?.value || '',
-    ls_smoke: $("ls_smoke")?.value || '',
-    ls_alc: $("ls_alc")?.value || '',
-    ls_sit: $("ls_sit")?.value || '',
-    sl_consistency: $("sl_consistency")?.value || '',
-    sl_caf: $("sl_caf")?.value || '',
-    sl_screen: $("sl_screen")?.value || '',
-    sl_apnea: $("sl_apnea")?.value || '',
-    sl_quality: $("sl_quality")?.value || ''
+    height: $("height")?.value || '', weight: $("weight")?.value || '', waist: $("waist")?.value || '',
+    sbp: $("sbp")?.value || '', dbp: $("dbp")?.value || '', rhr: $("rhr")?.value || '',
+    vo2max: $("vo2max")?.value || '', sleep: $("sleep")?.value || '',
+    gluUnit: $("gluUnit")?.value || 'mgdl', lipUnit: $("lipUnit")?.value || 'mgdl', crUnit: $("crUnit")?.value || 'mgdl',
+    hba1c: $("hba1c")?.value || '', fpg: $("fpg")?.value || '',
+    ldl: $("ldl")?.value || '', hdl: $("hdl")?.value || '', tg: $("tg")?.value || '',
+    crp: $("crp")?.value || '', cr: $("cr")?.value || '',
+    alt: $("alt")?.value || '', ast: $("ast")?.value || '', uric: $("uric")?.value || '',
+    ls_days: $("ls_days")?.value || '', ls_min: $("ls_min")?.value || '', ls_fv: $("ls_fv")?.value || '',
+    ls_smoke: $("ls_smoke")?.value || '', ls_alc: $("ls_alc")?.value || '', ls_sit: $("ls_sit")?.value || '',
+    sl_consistency: $("sl_consistency")?.value || '', sl_caf: $("sl_caf")?.value || '',
+    sl_screen: $("sl_screen")?.value || '', sl_apnea: $("sl_apnea")?.value || '', sl_quality: $("sl_quality")?.value || ''
   };
   return state;
 }
@@ -669,213 +605,146 @@ function applyState(state) {
   if (state.age != null) $("age").value = state.age;
   if (state.sex) {
     const el = document.querySelector(`input[name="sex"][value="${state.sex}"]`);
-    if (el) el.checked = true;
+    if (el) {
+       el.checked = true;
+       // Manually trigger change for radio buttons to update UI style if needed? 
+       // The CSS relies on peer-checked which works natively.
+    }
   }
   const ids = ["height","weight","waist","sbp","dbp","rhr","vo2max","sleep","hba1c","fpg","ldl","hdl","tg","crp","cr","alt","ast","uric","ls_days","ls_min","ls_fv","ls_smoke","ls_alc","ls_sit","sl_consistency","sl_caf","sl_screen","sl_apnea","sl_quality"]; 
   ids.forEach(id => { if (state[id] != null && $(id)) $(id).value = state[id]; });
   const uids = ["gluUnit","lipUnit","crUnit"]; uids.forEach(id => { if (state[id] && $(id)) $(id).value = state[id]; });
+  
   updateDerivedDisplays();
+  recalcAll();
 }
 
-function saveToLocal() {
-  try { localStorage.setItem('true_age_state_v1', JSON.stringify(serializeState())); alert('已保存到本地'); } catch (e) { alert('保存失败'); }
-}
-
-function loadFromLocal() {
-  try { const s = localStorage.getItem('true_age_state_v1'); if (!s) { alert('没有已保存的数据'); return; } const obj = JSON.parse(s); applyState(obj); alert('已从本地读取'); } catch (e) { alert('读取失败'); }
-}
-
-function exportJSON() {
-  const data = JSON.stringify(serializeState(), null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'true-age-state.json'; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function triggerImport() { $("importFile").click(); }
-
-function handleImportFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try { const obj = JSON.parse(reader.result); applyState(obj); alert('已导入'); } catch (e) { alert('导入失败'); }
-  };
-  reader.readAsText(file);
-}
-
-function buildSummary() {
+// --- Main Logic Wiring ---
+function recalcAll() {
   const input = readForm();
-  const bio = computeScore(input);
-  const ls = computeLifestyleAge(input, readLifestyleInputs());
-  const crf = computeCRFAge(input);
-  const sl = computeSleepScore(input, readSleepInputs());
-  const lines = [];
-  if (Number.isFinite(input.age)) lines.push(`物理年龄: ${input.age}`);
-  if (Number.isFinite(bio.bioAge)) lines.push(`生理年龄: ${bio.bioAge.toFixed(1)} (Δ ${bio.delta>0?'+':''}${bio.delta.toFixed(1)}) 可信度: ${Math.round(bio.confidence*100)}%`);
-  const top = bio.breakdown.slice(0,3).map(c=>`${c.label}${c.years>=0?'+':'−'}${Math.abs(c.years).toFixed(2)}岁`).join('，');
-  if (top) lines.push(`主要因子: ${top}`);
-  if (Number.isFinite(ls.lsAge)) lines.push(`生活方式年龄: ${ls.lsAge.toFixed(1)} (Δ ${ls.delta>0?'+':''}${ls.delta.toFixed(1)}) 分数: ${Math.round(ls.score)}`);
-  if (Number.isFinite(crf.crfAge)) lines.push(`心肺适能年龄: ${crf.crfAge.toFixed(1)} (Δ ${crf.delta>0?'+':''}${crf.delta.toFixed(1)})`);
-  if (Number.isFinite(sl.score)) lines.push(`睡眠评分: ${Math.round(sl.score)} 等级: ${sl.grade}`);
-  lines.push('由 True-Age 工具生成');
-  return lines.join('\n');
-}
-
-async function copySummary() {
-  try { await navigator.clipboard.writeText(buildSummary()); alert('结果已复制'); } catch (e) { alert('复制失败'); }
-}
-
-function makeShareLink() {
-  const s = serializeState();
-  const qs = new URLSearchParams();
-  Object.keys(s).forEach(k => { if (s[k] !== '' && s[k] != null) qs.set(k, s[k]); });
-  const link = `${window.location.origin}${window.location.pathname}?${qs.toString()}`;
-  return link;
-}
-
-async function copyShareLink() {
-  const link = makeShareLink();
-  try { await navigator.clipboard.writeText(link); alert('分享链接已复制'); } catch (e) { alert('复制失败'); }
-}
-
-function applyFromQuery() {
-  const p = new URLSearchParams(window.location.search);
-  if ([...p.keys()].length === 0) return false;
-  const obj = {};
-  p.forEach((v,k)=>{ obj[k]=v; });
-  applyState(obj);
-  const input = readForm();
-  if (Number.isFinite(input.age)) { const res = computeScore(input); renderResults(res, input); }
-  return true;
-}
-
-function onSubmit(e) {
-  e.preventDefault();
-  const input = readForm();
-  if (!Number.isFinite(input.age)) {
-    alert('请填写物理年龄');
-    return;
+  if (Number.isFinite(input.age)) {
+    const res = computeScore(input);
+    renderResults(res, input);
+    
+    // Update sub-sections if they have data
+    const ls = readLifestyleInputs();
+    const lsRes = computeLifestyleAge(input, ls);
+    renderLifestyle(lsRes, input.age);
+    
+    const crfRes = computeCRFAge(input);
+    renderCRF(crfRes, input.age);
+    
+    const sl = readSleepInputs();
+    const slRes = computeSleepScore(input, sl);
+    renderSleep(slRes);
   }
-  updateDerivedDisplays();
-  const res = computeScore(input);
-  renderResults(res, input);
+}
+
+const debouncedRecalc = debounce(recalcAll, 500);
+
+function onDemo() {
+  applyState({
+    age: 35, sex: 'male', height: 175, weight: 72, waist: 82,
+    sbp: 114, dbp: 72, rhr: 58, vo2max: 44, sleep: 7.3,
+    hba1c: 5.2, fpg: 88, ldl: 85, hdl: 60, tg: 90,
+    crp: 0.7, cr: 0.95, alt: 22, ast: 21, uric: 5.2,
+    ls_days: 4, ls_min: 40, ls_fv: 4, ls_smoke: 'none', ls_alc: 2, ls_sit: 7,
+    sl_consistency: 5, sl_caf: 'no', sl_screen: 'no', sl_apnea: 'no', sl_quality: 4
+  });
+  showToast('示例数据已加载', 'success');
 }
 
 function onReset() {
   $("ageForm").reset();
+  // Clear other manual inputs
+  document.querySelectorAll('input').forEach(i => {
+     if (i.type !== 'radio') i.value = '';
+  });
+  document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+  
   updateDerivedDisplays();
   renderResults({ bioAge: NaN, delta: NaN, confidence: 0, breakdown: [] }, {});
-}
-
-function onDemo() {
-  $("age").value = 35;
-  document.querySelector('input[name="sex"][value="male"]').checked = true;
-  $("height").value = 175;
-  $("weight").value = 72;
-  $("waist").value = 82;
-
-  $("sbp").value = 114;
-  $("dbp").value = 72;
-  $("rhr").value = 58;
-  $("vo2max").value = 44;
-  $("sleep").value = 7.3;
-
-  $("gluUnit").value = 'mgdl';
-  $("lipUnit").value = 'mgdl';
-  $("crUnit").value = 'mgdl';
-
-  $("hba1c").value = 5.2;
-  $("fpg").value = 88;
-  $("ldl").value = 85;
-  $("hdl").value = 60;
-  $("tg").value = 90;
-  $("crp").value = 0.7;
-  $("cr").value = 0.95;
-  $("alt").value = 22;
-  $("ast").value = 21;
-  $("uric").value = 5.2;
-
-  updateDerivedDisplays();
-}
-
-function onDemoLS() {
-  $("ls_days").value = 4;
-  $("ls_min").value = 40;
-  $("ls_fv").value = 4;
-  $("ls_smoke").value = 'none';
-  $("ls_alc").value = 2;
-  $("ls_sit").value = 7;
-}
-
-function onDemoSL() {
-  $("sl_consistency").value = 5;
-  $("sl_caf").value = 'no';
-  $("sl_screen").value = 'no';
-  $("sl_apnea").value = 'no';
-  $("sl_quality").value = 4;
+  renderLifestyle({ lsAge: NaN }, NaN);
+  renderCRF({ crfAge: NaN }, NaN);
+  renderSleep({ score: NaN }, NaN);
+  
+  showToast('数据已清空', 'info');
 }
 
 function wireEvents() {
-  $("ageForm").addEventListener('submit', onSubmit);
+  // Auto-calc on any input change
+  const inputs = document.querySelectorAll('input, select');
+  inputs.forEach(el => {
+    el.addEventListener('input', () => {
+      updateDerivedDisplays();
+      debouncedRecalc();
+    });
+  });
+
   $("resetBtn").addEventListener('click', onReset);
-  $("demoBtn").addEventListener('click', () => { onDemo(); const res = computeScore(readForm()); renderResults(res, readForm()); });
+  $("demoBtn").addEventListener('click', onDemo);
+  const mobileDemo = $("demoBtnMobile");
+  if(mobileDemo) mobileDemo.addEventListener('click', onDemo);
 
-  ["height", "weight", "waist"].forEach(id => {
-    $(id).addEventListener('input', updateDerivedDisplays);
-  });
-  document.querySelectorAll('input[name="sex"]').forEach(r => r.addEventListener('change', () => {
-    const input = readForm();
-    if (Number.isFinite(input.age)) {
-      const res = computeScore(input);
-      renderResults(res, input);
-    }
-  }));
+  // Sub-section manual buttons (optional now, but good for feedback)
+  $("ls_calcBtn").addEventListener('click', () => { recalcAll(); showToast('生活方式分析已更新', 'success'); });
+  $("crf_calcBtn").addEventListener('click', () => { recalcAll(); showToast('心肺适能分析已更新', 'success'); });
+  $("sl_calcBtn").addEventListener('click', () => { recalcAll(); showToast('睡眠评分已更新', 'success'); });
 
-  $("ls_calcBtn").addEventListener('click', () => {
-    const input = readForm();
-    const ls = readLifestyleInputs();
-    const res = computeLifestyleAge(input, ls);
-    renderLifestyle(res, input.age);
+  // Storage & Share
+  $("saveBtn").addEventListener('click', () => {
+    try { localStorage.setItem('true_age_state_v2', JSON.stringify(serializeState())); showToast('已保存到浏览器缓存', 'success'); }
+    catch (e) { showToast('保存失败', 'error'); }
   });
-  $("ls_demoBtn").addEventListener('click', () => {
-    onDemoLS();
-    const input = readForm();
-    const ls = readLifestyleInputs();
-    const res = computeLifestyleAge(input, ls);
-    renderLifestyle(res, input.age);
+  
+  $("loadBtn").addEventListener('click', () => {
+    try { 
+      const s = localStorage.getItem('true_age_state_v2'); 
+      if (!s) { showToast('未找到保存的数据', 'info'); return; }
+      applyState(JSON.parse(s)); 
+      showToast('数据已读取', 'success'); 
+    } catch (e) { showToast('读取失败', 'error'); }
   });
 
-  $("crf_calcBtn").addEventListener('click', () => {
-    const input = readForm();
-    const res = computeCRFAge(input);
-    renderCRF(res, input.age);
+  $("exportBtn").addEventListener('click', () => {
+    const data = JSON.stringify(serializeState(), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'true-age-data.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('文件已开始下载', 'success');
   });
 
-  $("sl_calcBtn").addEventListener('click', () => {
-    const input = readForm();
-    const sl = readSleepInputs();
-    const res = computeSleepScore(input, sl);
-    renderSleep(res);
-  });
-  $("sl_demoBtn").addEventListener('click', () => {
-    onDemoSL();
-    const input = readForm();
-    const sl = readSleepInputs();
-    const res = computeSleepScore(input, sl);
-    renderSleep(res);
+  $("importBtn").addEventListener('click', () => $("importFile").click());
+  $("importFile").addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { applyState(JSON.parse(reader.result)); showToast('导入成功', 'success'); } 
+      catch (e) { showToast('文件格式错误', 'error'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   });
 
-  $("saveBtn").addEventListener('click', saveToLocal);
-  $("loadBtn").addEventListener('click', loadFromLocal);
-  $("exportBtn").addEventListener('click', exportJSON);
-  $("importBtn").addEventListener('click', triggerImport);
-  $("copyBtn").addEventListener('click', () => { copySummary(); });
-  $("shareBtn").addEventListener('click', () => { copyShareLink(); });
-  $("importFile").addEventListener('change', (e) => { handleImportFile(e.target.files?.[0]); e.target.value = ''; });
+  $("shareBtn").addEventListener('click', async () => {
+      const s = serializeState();
+      const qs = new URLSearchParams();
+      Object.keys(s).forEach(k => { if (s[k] !== '' && s[k] != null) qs.set(k, s[k]); });
+      const link = `${window.location.origin}${window.location.pathname}?${qs.toString()}`;
+      try { await navigator.clipboard.writeText(link); showToast('分享链接已复制', 'success'); } 
+      catch (e) { showToast('复制失败', 'error'); }
+  });
 }
 
-const applied = applyFromQuery();
-if (!applied) updateDerivedDisplays();
+// Init
+lucide.createIcons();
+if (window.location.search) {
+    const p = new URLSearchParams(window.location.search);
+    const obj = {};
+    p.forEach((v,k)=>{ obj[k]=v; });
+    applyState(obj);
+}
 wireEvents();

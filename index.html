@@ -1,364 +1,501 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>真实生理年龄估算器</title>
+  <title>TrueAge - 真实生理年龄估算器</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+    /* Hide scrollbar for chrome/safari/opera */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    
+    .input-group { transition: all 0.2s; }
+    .input-group:focus-within { transform: translateY(-1px); }
+    .input-group:focus-within label { color: #0284c7; }
+    .input-group:focus-within input, .input-group:focus-within select { border-color: #0284c7; ring: 2px solid #e0f2fe; }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-  <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 text-white">
-    <div class="max-w-6xl mx-auto px-6 py-6">
-      <h1 class="text-2xl md:text-3xl font-semibold">真实生理年龄估算器</h1>
-      <p class="text-white/90 mt-1">输入关键生理指标，估算你的生理年龄，并获得个性化建议</p>
-    </div>
-  </header>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
 
-  <main class="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6">
-      <h2 class="text-lg font-medium text-slate-800 mb-4">输入生理指标</h2>
-      <form id="ageForm" class="space-y-6">
-        <div>
-          <h3 class="text-sm font-semibold text-slate-700 mb-2">基础信息</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <label class="text-xs text-slate-600">物理年龄(岁)</label>
-              <input id="age" type="number" min="18" max="100" step="1" required class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="30" />
-            </div>
-            <div class="col-span-1 md:col-span-2">
-              <label class="text-xs text-slate-600">性别</label>
-              <div class="mt-1 flex gap-3">
-                <label class="inline-flex items-center gap-2">
-                  <input type="radio" name="sex" value="male" class="text-violet-600" />
-                  <span>男</span>
-                </label>
-                <label class="inline-flex items-center gap-2">
-                  <input type="radio" name="sex" value="female" class="text-violet-600" />
-                  <span>女</span>
-                </label>
-              </div>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">身高(cm)</label>
-              <input id="height" type="number" min="120" max="220" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="170" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">体重(kg)</label>
-              <input id="weight" type="number" min="30" max="200" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="65" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">腰围(cm)</label>
-              <input id="waist" type="number" min="40" max="160" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="80" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">BMI</label>
-              <input id="bmi" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">腰高比(WHtR)
-                <span class="block text-[11px] text-slate-400 mt-0.5">腰围÷身高，目标 <0.5，有助于降低心血管与代谢风险</span>
-              </label>
-              <input id="whtr" type="text" disabled class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50" placeholder="—" />
-            </div>
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">
+            <i data-lucide="activity" class="w-5 h-5"></i>
           </div>
+          <span class="font-bold text-xl tracking-tight text-slate-900">TrueAge</span>
         </div>
-
-        <div>
-          <h3 class="text-sm font-semibold text-slate-700 mb-2">生命体征</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <label class="text-xs text-slate-600">收缩压 SBP (mmHg)</label>
-              <input id="sbp" type="number" min="80" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="115" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">舒张压 DBP (mmHg)</label>
-              <input id="dbp" type="number" min="50" max="130" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="75" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">静息心率 RHR (bpm)</label>
-              <input id="rhr" type="number" min="35" max="120" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="60" />
-            </div>
-            <div class="md:col-span-2">
-              <label class="text-xs text-slate-600">最大摄氧量 VO2max (ml/kg/min)
-                <span class="block text-[11px] text-slate-400 mt-0.5">代表心肺适能水平，越高通常越有利于心血管与寿命</span>
-              </label>
-              <input id="vo2max" type="number" min="15" max="80" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="40" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">睡眠时长(小时/晚)
-                <span class="block text-[11px] text-slate-400 mt-0.5">多数研究显示约 7–9 小时与较低健康风险相关</span>
-              </label>
-              <input id="sleep" type="number" min="3" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="7.5" />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold text-slate-700 mb-2">实验室指标</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-            <div>
-              <label class="text-xs text-slate-600">血糖单位</label>
-              <select id="gluUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="mgdl">mg/dL</option>
-                <option value="mmol">mmol/L</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">血脂单位</label>
-              <select id="lipUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="mgdl">mg/dL</option>
-                <option value="mmol">mmol/L</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">肌酐单位</label>
-              <select id="crUnit" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="mgdl">mg/dL</option>
-                <option value="umol">µmol/L</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-            <div>
-              <label class="text-xs text-slate-600">HbA1c(%)</label>
-              <input id="hba1c" type="number" min="4" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5.4" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">空腹血糖</label>
-              <input id="fpg" type="number" min="50" max="300" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="90" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">LDL</label>
-              <input id="ldl" type="number" min="20" max="300" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="95" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">HDL</label>
-              <input id="hdl" type="number" min="10" max="120" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="58" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">甘油三酯 TG</label>
-              <input id="tg" type="number" min="20" max="1000" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="120" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">hs-CRP(mg/L)</label>
-              <input id="crp" type="number" min="0" max="20" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="0.8" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">肌酐</label>
-              <input id="cr" type="number" min="0.2" max="1500" step="0.01" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="1.0" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">ALT(U/L)</label>
-              <input id="alt" type="number" min="5" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="24" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">AST(U/L)</label>
-              <input id="ast" type="number" min="5" max="200" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="22" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">尿酸(mg/dL)</label>
-              <input id="uric" type="number" min="1" max="12" step="0.1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5.6" />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex gap-3 pt-2">
-          <button id="calcBtn" type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算生理年龄</button>
-          <button id="resetBtn" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">清空</button>
-          <button id="demoBtn" type="button" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200">填充示例</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6">
-      <h2 class="text-lg font-medium text-slate-800 mb-4">结果与建议</h2>
-      <div class="grid gap-4">
-        <div class="p-4 rounded-lg bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100">
-          <div class="flex items-end gap-4">
-            <div>
-              <div class="text-sm text-slate-600">估算的生理年龄</div>
-              <div id="bioAgeVal" class="text-4xl font-semibold text-slate-900">—</div>
-            </div>
-            <div class="ml-auto text-right">
-              <div class="text-sm text-slate-600">相对物理年龄</div>
-              <div id="deltaVal" class="text-xl font-medium">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-slate-700">可信度</span>
-            <span id="confidenceVal" class="text-sm text-slate-600">—</span>
-          </div>
-          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div id="confidenceBar" class="h-2 bg-violet-500" style="width: 0%"></div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold text-slate-700 mb-2">主要贡献因子</h3>
-          <div id="breakdownList" class="space-y-2 text-sm text-slate-700"></div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold text-slate-700 mb-2">优化建议(基于主要因子)</h3>
-          <ul id="suggestionsList" class="list-disc pl-5 text-sm text-slate-700 space-y-1"></ul>
-        </div>
-
-        <div class="text-xs text-slate-500 leading-relaxed">
-          本工具基于多指标加权与标准化差异的算法原理，结合心代谢、炎症、肾功能等关键系统的综合表现估算生理年龄。结果仅供健康管理与教育用途，不构成医疗诊断或治疗建议。
+        <div class="flex items-center gap-2">
+          <button id="resetBtn" class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors" title="清空数据">
+            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+          </button>
+          <button id="demoBtn" class="hidden md:flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>示例数据</span>
+          </button>
+          <!-- Mobile Demo Button (Icon Only) -->
+          <button id="demoBtnMobile" class="md:hidden p-2 text-primary-600 hover:bg-primary-50 rounded-full transition-colors">
+             <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </button>
         </div>
       </div>
-    </section>
-    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
-      <h2 class="text-lg font-medium text-slate-800 mb-4">趣味健康测试</h2>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="rounded-lg border border-slate-200 p-4">
-          <div class="text-sm font-semibold text-slate-800 mb-3">生活方式年龄</div>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <label class="text-xs text-slate-600">活动天数/周</label>
-              <input id="ls_days" type="number" min="0" max="7" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Column: Inputs (8 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- Section 1: Basic Info -->
+        <section class="glass-card rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-6 text-slate-800">
+            <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <i data-lucide="user" class="w-5 h-5"></i>
             </div>
-            <div>
-              <label class="text-xs text-slate-600">单次运动时长(分)</label>
-              <input id="ls_min" type="number" min="0" max="180" step="5" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="40" />
+            <h2 class="text-lg font-bold">基础信息</h2>
+          </div>
+
+          <form id="ageForm" class="space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-5">
+              
+              <!-- Gender -->
+              <div class="col-span-2 sm:col-span-1">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">性别</label>
+                <div class="flex bg-slate-100 p-1 rounded-lg">
+                  <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="sex" value="male" class="peer sr-only" />
+                    <div class="text-center py-2 rounded-md text-sm font-medium text-slate-500 peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all">男</div>
+                  </label>
+                  <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="sex" value="female" class="peer sr-only" />
+                    <div class="text-center py-2 rounded-md text-sm font-medium text-slate-500 peer-checked:bg-white peer-checked:text-pink-600 peer-checked:shadow-sm transition-all">女</div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Age -->
+              <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">物理年龄</label>
+                <div class="relative">
+                  <input id="age" type="number" min="18" max="100" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder-slate-300" placeholder="30" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">岁</span>
+                </div>
+              </div>
+
+              <!-- Height -->
+              <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">身高</label>
+                <div class="relative">
+                  <input id="height" type="number" min="120" max="220" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder-slate-300" placeholder="170" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">cm</span>
+                </div>
+              </div>
+
+              <!-- Weight -->
+              <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">体重</label>
+                <div class="relative">
+                  <input id="weight" type="number" min="30" max="200" step="0.1" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder-slate-300" placeholder="65" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">kg</span>
+                </div>
+              </div>
+
+              <!-- Waist -->
+              <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">腰围</label>
+                <div class="relative">
+                  <input id="waist" type="number" min="40" max="160" step="0.1" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all placeholder-slate-300" placeholder="80" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">cm</span>
+                </div>
+              </div>
+
+              <!-- BMI (ReadOnly) -->
+              <div class="input-group opacity-75">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">BMI</label>
+                <input id="bmi" type="text" disabled class="w-full px-3 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed" placeholder="—" />
+              </div>
+
             </div>
-            <div>
-              <label class="text-xs text-slate-600">蔬果份/日</label>
-              <input id="ls_fv" type="number" min="0" max="12" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
+            
+            <!-- WHtR Info -->
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center justify-between">
+               <div>
+                 <div class="text-xs font-medium text-slate-500">腰高比 (WHtR)</div>
+                 <div class="text-[10px] text-slate-400">目标 &lt;0.5，反映中心性肥胖风险</div>
+               </div>
+               <input id="whtr" type="text" disabled class="w-16 text-right bg-transparent border-none text-sm font-bold text-slate-700 p-0" placeholder="—" />
             </div>
-            <div>
-              <label class="text-xs text-slate-600">吸烟</label>
-              <select id="ls_smoke" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
+          </form>
+        </section>
+
+        <!-- Section 2: Vitals -->
+        <section class="glass-card rounded-2xl p-6">
+           <div class="flex items-center gap-2 mb-6 text-slate-800">
+            <div class="p-2 bg-rose-100 rounded-lg text-rose-600">
+              <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+            </div>
+            <h2 class="text-lg font-bold">生命体征</h2>
+          </div>
+          
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-5">
+             <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">收缩压 (SBP)</label>
+                <div class="relative">
+                  <input id="sbp" type="number" class="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder-slate-300" placeholder="115" />
+                  <span class="absolute right-2 top-2.5 text-[10px] text-slate-400 bg-slate-100 px-1 rounded">mmHg</span>
+                </div>
+             </div>
+             <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">舒张压 (DBP)</label>
+                <div class="relative">
+                  <input id="dbp" type="number" class="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder-slate-300" placeholder="75" />
+                  <span class="absolute right-2 top-2.5 text-[10px] text-slate-400 bg-slate-100 px-1 rounded">mmHg</span>
+                </div>
+             </div>
+             <div class="input-group">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">静息心率</label>
+                <div class="relative">
+                  <input id="rhr" type="number" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder-slate-300" placeholder="60" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">bpm</span>
+                </div>
+             </div>
+             <div class="col-span-2">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">最大摄氧量 (VO2max)</label>
+                  <span class="text-[10px] text-slate-400">越高越好</span>
+                </div>
+                <div class="relative">
+                  <input id="vo2max" type="number" step="0.1" class="w-full pl-3 pr-16 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder-slate-300" placeholder="40" />
+                  <span class="absolute right-2 top-2.5 text-[10px] text-slate-400 bg-slate-100 px-1 rounded">ml/kg/min</span>
+                </div>
+             </div>
+             <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">睡眠时长</label>
+                <div class="relative">
+                  <input id="sleep" type="number" step="0.1" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition-all placeholder-slate-300" placeholder="7.5" />
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400">h</span>
+                </div>
+             </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Labs -->
+        <section class="glass-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-6">
+             <div class="flex items-center gap-2 text-slate-800">
+              <div class="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                <i data-lucide="flask-conical" class="w-5 h-5"></i>
+              </div>
+              <h2 class="text-lg font-bold">实验室指标</h2>
+            </div>
+            <!-- Unit Toggles -->
+            <div class="flex gap-2">
+              <select id="gluUnit" class="text-xs bg-slate-100 border-none rounded-md py-1 pl-2 pr-6 focus:ring-1 focus:ring-emerald-500">
+                <option value="mgdl">Glu: mg/dL</option>
+                <option value="mmol">Glu: mmol/L</option>
+              </select>
+              <select id="lipUnit" class="text-xs bg-slate-100 border-none rounded-md py-1 pl-2 pr-6 focus:ring-1 focus:ring-emerald-500">
+                <option value="mgdl">Lip: mg/dL</option>
+                <option value="mmol">Lip: mmol/L</option>
+              </select>
+              <select id="crUnit" class="text-xs bg-slate-100 border-none rounded-md py-1 pl-2 pr-6 focus:ring-1 focus:ring-emerald-500">
+                <option value="mgdl">Cr: mg/dL</option>
+                <option value="umol">Cr: µmol/L</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Sugar -->
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">HbA1c</label>
+              <input id="hba1c" type="number" step="0.1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="5.4" />
+            </div>
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">空腹血糖</label>
+              <input id="fpg" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="90" />
+            </div>
+            <!-- Lipids -->
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">LDL</label>
+              <input id="ldl" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="95" />
+            </div>
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">HDL</label>
+              <input id="hdl" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="58" />
+            </div>
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">甘油三酯</label>
+              <input id="tg" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="120" />
+            </div>
+            <!-- Inflammation/Kidney/Liver -->
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">hs-CRP</label>
+              <input id="crp" type="number" step="0.1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="0.8" />
+            </div>
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">肌酐</label>
+              <input id="cr" type="number" step="0.01" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="1.0" />
+            </div>
+            <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">尿酸</label>
+              <input id="uric" type="number" step="0.1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="5.6" />
+            </div>
+             <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">ALT</label>
+              <input id="alt" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="24" />
+            </div>
+             <div class="input-group">
+              <label class="text-[11px] font-semibold text-slate-500 uppercase">AST</label>
+              <input id="ast" type="number" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" placeholder="22" />
+            </div>
+          </div>
+        </section>
+        
+         <!-- Hidden Buttons (Functionality preserved, but UI handled by auto-calc/navbar) -->
+         <div class="hidden">
+           <button id="calcBtn" type="submit">Calc</button>
+         </div>
+
+      </div>
+
+      <!-- Right Column: Results & Tools (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Primary Result Card -->
+        <section class="sticky top-24">
+           <div class="glass-card rounded-2xl overflow-hidden shadow-lg border border-primary-100 ring-4 ring-primary-50">
+             <div class="bg-gradient-to-br from-primary-600 to-indigo-700 px-6 py-8 text-white relative overflow-hidden">
+               <!-- Decorative circle -->
+               <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+               
+               <div class="relative z-10">
+                 <h3 class="text-primary-100 text-sm font-medium mb-1">估算的生理年龄</h3>
+                 <div class="flex items-baseline gap-3">
+                   <div id="bioAgeVal" class="text-5xl font-bold tracking-tighter">—</div>
+                   <div id="deltaVal" class="text-lg font-medium text-white/90 px-2 py-0.5 rounded-lg bg-white/20 backdrop-blur-sm">...</div>
+                 </div>
+                 
+                 <div class="mt-6 space-y-2">
+                    <div class="flex justify-between text-xs text-primary-200 font-medium uppercase tracking-wide">
+                      <span>可信度</span>
+                      <span id="confidenceVal">0%</span>
+                    </div>
+                    <div class="h-2 bg-black/20 rounded-full overflow-hidden backdrop-blur-sm">
+                      <div id="confidenceBar" class="h-full bg-white/90 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                    </div>
+                 </div>
+               </div>
+             </div>
+
+             <div class="p-6 bg-white">
+               <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                 <i data-lucide="trending-up" class="w-4 h-4 text-slate-400"></i>
+                 主要贡献因子
+               </h4>
+               <div id="breakdownList" class="space-y-3">
+                 <div class="text-center text-sm text-slate-400 py-4">输入数据以查看分析</div>
+               </div>
+               
+               <div class="mt-6 pt-6 border-t border-slate-100">
+                  <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
+                    优化建议
+                  </h4>
+                  <ul id="suggestionsList" class="text-xs text-slate-600 space-y-2 list-none">
+                    <!-- Tips injected here -->
+                  </ul>
+               </div>
+             </div>
+           </div>
+           
+           <!-- Action Bar -->
+           <div class="glass-card rounded-xl p-4 mt-4 flex flex-wrap gap-2 justify-center">
+             <button id="saveBtn" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex flex-col items-center gap-1 min-w-[60px]">
+               <i data-lucide="save" class="w-5 h-5"></i>
+               <span class="text-[10px]">保存</span>
+             </button>
+             <button id="loadBtn" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex flex-col items-center gap-1 min-w-[60px]">
+               <i data-lucide="folder-open" class="w-5 h-5"></i>
+               <span class="text-[10px]">读取</span>
+             </button>
+             <button id="exportBtn" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex flex-col items-center gap-1 min-w-[60px]">
+               <i data-lucide="download" class="w-5 h-5"></i>
+               <span class="text-[10px]">导出</span>
+             </button>
+             <button id="importBtn" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex flex-col items-center gap-1 min-w-[60px]">
+               <i data-lucide="upload" class="w-5 h-5"></i>
+               <span class="text-[10px]">导入</span>
+             </button>
+             <button id="shareBtn" class="p-2 text-primary-600 hover:bg-primary-50 rounded-lg flex flex-col items-center gap-1 min-w-[60px]">
+               <i data-lucide="share-2" class="w-5 h-5"></i>
+               <span class="text-[10px]">分享</span>
+             </button>
+             <!-- Hidden Copy Button for internal logic -->
+             <button id="copyBtn" class="hidden">Copy</button>
+             <input id="importFile" type="file" accept="application/json" class="hidden" />
+           </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Secondary Tools Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+      
+      <!-- Lifestyle -->
+      <section class="glass-card rounded-2xl p-5 border-t-4 border-t-emerald-500">
+        <div class="flex items-center justify-between mb-4">
+           <h3 class="font-bold text-slate-800">生活方式</h3>
+           <div class="text-emerald-600 font-bold text-xl" id="ls_ageVal">—</div>
+        </div>
+        
+        <div class="space-y-3 mb-4">
+           <div class="grid grid-cols-2 gap-2 text-xs">
+             <div>
+               <label class="block text-slate-400 mb-1">运动天数/周</label>
+               <input id="ls_days" type="number" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200" />
+             </div>
+             <div>
+               <label class="block text-slate-400 mb-1">时长(分)</label>
+               <input id="ls_min" type="number" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200" />
+             </div>
+              <div>
+               <label class="block text-slate-400 mb-1">蔬果份/日</label>
+               <input id="ls_fv" type="number" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200" />
+             </div>
+             <div>
+               <label class="block text-slate-400 mb-1">酒精杯/周</label>
+               <input id="ls_alc" type="number" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200" />
+             </div>
+           </div>
+           <div class="grid grid-cols-2 gap-2 text-xs">
+             <select id="ls_smoke" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200">
                 <option value="none">不吸烟</option>
                 <option value="former">已戒烟</option>
-                <option value="current">在吸烟</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">酒精(杯/周)</label>
-              <input id="ls_alc" type="number" min="0" max="50" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="2" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">久坐小时/日</label>
-              <input id="ls_sit" type="number" min="0" max="16" step="0.5" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="7" />
-            </div>
+                <option value="current">吸烟</option>
+             </select>
+             <input id="ls_sit" type="number" placeholder="久坐h" class="w-full p-1.5 bg-slate-50 rounded border border-slate-200" />
+           </div>
+        </div>
+
+        <div class="flex gap-2 mb-3">
+           <button id="ls_calcBtn" class="flex-1 py-1.5 bg-emerald-50 text-emerald-600 text-xs rounded-lg font-medium hover:bg-emerald-100 transition">计算</button>
+           <button id="ls_demoBtn" class="px-3 py-1.5 bg-slate-50 text-slate-500 text-xs rounded-lg hover:bg-slate-100">示例</button>
+        </div>
+
+        <div class="text-xs text-slate-500 space-y-1">
+          <div id="ls_deltaVal"></div>
+          <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div id="ls_scoreBar" class="h-full bg-emerald-500 rounded-full transition-all" style="width:0%"></div>
           </div>
-          <div class="flex gap-3 mt-3">
-            <button id="ls_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
-            <button id="ls_demoBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200" type="button">示例</button>
+          <ul id="ls_suggestions" class="list-disc pl-4 pt-2 text-[10px] leading-relaxed"></ul>
+        </div>
+      </section>
+
+      <!-- Fitness -->
+      <section class="glass-card rounded-2xl p-5 border-t-4 border-t-rose-500">
+         <div class="flex items-center justify-between mb-4">
+           <h3 class="font-bold text-slate-800">心肺适能</h3>
+           <div class="text-rose-600 font-bold text-xl" id="crf_ageVal">—</div>
+        </div>
+        <p class="text-xs text-slate-500 mb-4 h-12">
+          基于上方输入的 <strong>性别</strong>、<strong>年龄</strong> 以及 <strong>VO2max</strong> (首选) 或 <strong>静息心率</strong> (次选) 自动估算。
+        </p>
+        <button id="crf_calcBtn" class="w-full py-1.5 mb-3 bg-rose-50 text-rose-600 text-xs rounded-lg font-medium hover:bg-rose-100 transition">更新计算</button>
+        <div class="text-xs text-slate-500">
+           <div id="crf_deltaVal"></div>
+           <div id="crf_note" class="text-[10px] text-slate-400 mt-1"></div>
+        </div>
+      </section>
+
+      <!-- Sleep -->
+      <section class="glass-card rounded-2xl p-5 border-t-4 border-t-indigo-500">
+         <div class="flex items-center justify-between mb-4">
+           <h3 class="font-bold text-slate-800">睡眠评分</h3>
+           <div class="flex items-baseline gap-1">
+             <span id="sl_scoreVal" class="text-indigo-600 font-bold text-xl">—</span>
+             <span id="sl_gradeVal" class="text-xs text-slate-400 font-medium bg-slate-100 px-1.5 rounded"></span>
+           </div>
+        </div>
+
+        <div class="space-y-2 mb-4">
+          <div class="flex gap-2 text-xs">
+            <input id="sl_consistency" type="number" placeholder="规律天数/周" class="flex-1 p-1.5 bg-slate-50 rounded border border-slate-200" />
+            <input id="sl_quality" type="number" placeholder="质量(1-5)" class="flex-1 p-1.5 bg-slate-50 rounded border border-slate-200" />
           </div>
-          <div class="mt-4 grid gap-2 text-sm">
-            <div class="flex items-end gap-3">
-              <div>
-                <div class="text-xs text-slate-600">生活方式年龄</div>
-                <div id="ls_ageVal" class="text-2xl font-semibold text-slate-900">—</div>
-              </div>
-              <div class="ml-auto text-right">
-                <div class="text-xs text-slate-600">相对物理年龄</div>
-                <div id="ls_deltaVal" class="text-base">—</div>
-              </div>
-            </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div id="ls_scoreBar" class="h-2 bg-violet-500" style="width: 0%"></div>
-            </div>
-            <ul id="ls_suggestions" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          <div class="flex gap-1 text-[10px]">
+             <select id="sl_caf" class="flex-1 p-1 bg-slate-50 rounded border-slate-200"><option value="no">午后无咖</option><option value="yes">有</option></select>
+             <select id="sl_screen" class="flex-1 p-1 bg-slate-50 rounded border-slate-200"><option value="no">睡前无屏</option><option value="yes">有</option></select>
+             <select id="sl_apnea" class="flex-1 p-1 bg-slate-50 rounded border-slate-200"><option value="no">无鼾</option><option value="yes">有</option></select>
           </div>
         </div>
 
-        <div class="rounded-lg border border-slate-200 p-4">
-          <div class="text-sm font-semibold text-slate-800 mb-3">心肺适能年龄</div>
-          <div class="text-xs text-slate-600">使用上方的性别、年龄及 VO2max 或 RHR 自动估算</div>
-          <div class="flex gap-3 mt-3">
-            <button id="crf_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
-          </div>
-          <div class="mt-4 grid gap-2 text-sm">
-            <div class="flex items-end gap-3">
-              <div>
-                <div class="text-xs text-slate-600">心肺适能年龄</div>
-                <div id="crf_ageVal" class="text-2xl font-semibold text-slate-900">—</div>
-              </div>
-              <div class="ml-auto text-right">
-                <div class="text-xs text-slate-600">相对物理年龄</div>
-                <div id="crf_deltaVal" class="text-base">—</div>
-              </div>
-            </div>
-            <div id="crf_note" class="text-xs text-slate-500">—</div>
-          </div>
+        <div class="flex gap-2 mb-3">
+           <button id="sl_calcBtn" class="flex-1 py-1.5 bg-indigo-50 text-indigo-600 text-xs rounded-lg font-medium hover:bg-indigo-100 transition">计算</button>
+           <button id="sl_demoBtn" class="px-3 py-1.5 bg-slate-50 text-slate-500 text-xs rounded-lg hover:bg-slate-100">示例</button>
         </div>
+        
+        <div class="text-xs text-slate-500">
+           <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+            <div id="sl_scoreBar" class="h-full bg-indigo-500 rounded-full transition-all" style="width:0%"></div>
+          </div>
+          <ul id="sl_suggestions" class="list-disc pl-4 text-[10px] leading-relaxed"></ul>
+        </div>
+      </section>
 
-        <div class="rounded-lg border border-slate-200 p-4">
-          <div class="text-sm font-semibold text-slate-800 mb-3">睡眠评分</div>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <label class="text-xs text-slate-600">规律天数/周
-                <span class="block text-[11px] text-slate-400 mt-0.5">指按相近时间入睡和起床的天数，越规律越好</span>
-              </label>
-              <input id="sl_consistency" type="number" min="0" max="7" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="5" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">14点后咖啡因</label>
-              <select id="sl_caf" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="no">否</option>
-                <option value="yes">是</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">睡前1小时看屏幕</label>
-              <select id="sl_screen" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="no">否</option>
-                <option value="yes">是</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">打鼾/呼吸暂停风险</label>
-              <select id="sl_apnea" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500">
-                <option value="no">否</option>
-                <option value="yes">是</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs text-slate-600">主观休息感(1-5)</label>
-              <input id="sl_quality" type="number" min="1" max="5" step="1" class="mt-1 w-full rounded-lg border-slate-300 focus:ring-violet-500 focus:border-violet-500" placeholder="4" />
-            </div>
-          </div>
-          <div class="flex gap-3 mt-3">
-            <button id="sl_calcBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">计算</button>
-            <button id="sl_demoBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200" type="button">示例</button>
-          </div>
-          <div class="mt-4 grid gap-2 text-sm">
-            <div class="flex items-end gap-3">
-              <div>
-                <div class="text-xs text-slate-600">睡眠评分</div>
-                <div id="sl_scoreVal" class="text-2xl font-semibold text-slate-900">—</div>
-              </div>
-              <div class="ml-auto text-right">
-                <div class="text-xs text-slate-600">等级</div>
-                <div id="sl_gradeVal" class="text-base">—</div>
-              </div>
-            </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div id="sl_scoreBar" class="h-2 bg-violet-500" style="width: 0%"></div>
-            </div>
-            <ul id="sl_suggestions" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
-      <h2 class="text-lg font-medium text-slate-800 mb-4">数据与分享</h2>
-      <div class="flex flex-wrap gap-3">
-        <button id="saveBtn" class="px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">保存到本地</button>
-        <button id="loadBtn" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">从本地读取</button>
-        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">导出JSON</button>
-        <button id="importBtn" class="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200" type="button">导入JSON</button>
-        <button id="copyBtn" class="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">复制结果</button>
-        <button id="shareBtn" class="px-3 py-2 rounded-lg bg-fuchsia-600 text-white hover:bg-fuchsia-700">复制分享链接</button>
-        <input id="importFile" type="file" accept="application/json" class="hidden" />
-      </div>
-    </section>
+    </div>
+
+    <footer class="mt-12 text-center text-xs text-slate-400 pb-4">
+      <p>© TrueAge 生理年龄估算工具 - 仅供健康教育参考，不作为医疗诊断依据</p>
+    </footer>
+
   </main>
 
   <script src="./app.js"></script>
